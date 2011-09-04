@@ -1,0 +1,113 @@
+<html>
+
+<script type="text/javascript">
+	function sendRequest(url,callback,object,postData) {
+		var req = createXMLHTTPObject();
+		if (!req) return;
+		var method = (postData) ? "POST" : "GET";
+		req.open("POST",url,true);
+		//req.setRequestHeader('User-Agent','XMLHTTP/1.0');
+		if (postData)
+			req.setRequestHeader('Content-type','application/x-www-form-urlencoded');
+		req.onreadystatechange = function () {
+			if (req.readyState != 4) return;
+			if (req.status != 200 && req.status != 304) {
+	//			alert('HTTP error ' + req.status);
+				return;
+			}
+			callback(req, object);
+		}
+		if (req.readyState == 4) return;
+		req.send(postData);
+	}
+
+	var XMLHttpFactories = [
+		function () {return new XMLHttpRequest()},
+		function () {return new ActiveXObject("Msxml2.XMLHTTP")},
+		function () {return new ActiveXObject("Msxml3.XMLHTTP")},
+		function () {return new ActiveXObject("Microsoft.XMLHTTP")}
+	];
+
+	function createXMLHTTPObject() {
+		var xmlhttp = false;
+		for (var i=0;i<XMLHttpFactories.length;i++) {
+			try {
+				xmlhttp = XMLHttpFactories[i]();
+			}
+			catch (e) {
+				continue;
+			}
+			break;
+		}
+		return xmlhttp;
+	}
+	
+	function handleRequest(req, object) {
+		//alert(object);
+		var writeroot = document.getElementById(object);
+		//alert(req.responseText);
+		writeroot.innerHTML += req.responseText;
+		var objDiv = document.getElementById('chatbox');
+		objDiv.scrollTop = objDiv.scrollHeight;
+	}
+	function sendMessage(){  
+		var param = "sendmsg?msg=" + document.getElementById('username').value + ":   " + document.getElementById('msgin').value;
+		sendRequest(param,handleRequest,'chatbox');
+		var objDiv = document.getElementById('chatbox');
+		objDiv.scrollTop = objDiv.scrollHeight;
+	}
+	
+	function submitenter(myfield,e)
+	{
+		var keycode;
+		if (window.event) keycode = window.event.keyCode;
+		else if (e) keycode = e.which;
+		else return true;
+
+		if (keycode == 13)
+		   {
+		   sendMessage();
+		   document.getElementById('msgin').value = "";
+		   document.getElementById('chatbox').innerHTML = "";
+		   sendRequest('loadmsg',handleRequest,'chatbox');
+		   return false;
+		   }
+		else
+		   return true;
+	}
+    
+    function setupRefresh() {
+        setInterval("refreshChat();", 3000);
+    }
+    function refreshChat() {
+		document.getElementById('chatbox').innerHTML = "";
+        sendRequest('loadmsg',handleRequest,'chatbox');
+    }
+</script>
+
+<body id="body" onload="sendRequest('loadmsg',handleRequest,'chatbox');setupRefresh();">
+	<!--button onclick="sendMessage()">
+		Send Request
+	</button-->
+	<br>
+	<h4>Username:</h4>
+	<input id="username" "type="text">
+	<h4>Message:</h4>
+	<input id="msgin" "type="text" onkeypress="return submitenter(this,event)" >
+	<div id="chatbox" style="position:absolute; 
+	 left:200px;
+	 top:50px; 
+	 width:500px;
+	 height:300px;
+	 background-color:#999999;
+	 overflow:auto;">
+	 Your message will display here.
+	</div>
+	
+	<!--div id="msgbody">
+		Test
+	</div-->
+	
+</body>
+
+</html>
